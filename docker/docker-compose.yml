@@ -5,14 +5,14 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile
-    container_name: program-with-swati-app
+    container_name: php-oop-erp-practice
     restart: always
     working_dir: /var/www/
     volumes:
       - ../src:/var/www
   nginx:
     image: nginx:1.19-alpine
-    container_name: program-with-swati-nginx
+    container_name: php-oop-erp-practice-nginx
     restart: always
     ports:
       - 8000:80
