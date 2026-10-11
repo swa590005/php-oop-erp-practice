@@ -21,6 +21,12 @@ use app\erp_oops_classes\Material;
 use app\erp_oops_classes\AbstractArticle;
 use app\erp_oops_classes\Exportable;
 use app\erp_oops_classes\EmailClass;
+use app\erp_oops_classes\NewEmailService;
+use app\erp_oops_classes\FakeEmailNotifier;
+use app\erp_oops_classes\BothChannelsNotifier;
+use app\erp_oops_classes\SmsClass;
+use app\erp_oops_classes\SmsNotifier;
+
 
 //----------------------------------------------------------------------------------
 
@@ -140,5 +146,19 @@ $lines = [
 //$saveData->saveData($lines);
 
 //----------------------dependency injection
-$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new EmailClass());
+
+$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new NewEmailService());
+//$invoiceProcessor->processInvoice($lines, 'a@b.de');
+
+//----------------------Open-Closed Principle
+
+$fake = new FakeEmailNotifier();
+$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), $fake);
+
+//$invoiceProcessor->processInvoice($lines, 'a@b.de');
+//var_dump($fake->getLastEmailAddress(), $fake->getLastInvoiceTotal());
+
+
+//------------------------Interface Segregation
+$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new BothChannelsNotifier());
 $invoiceProcessor->processInvoice($lines, 'a@b.de');

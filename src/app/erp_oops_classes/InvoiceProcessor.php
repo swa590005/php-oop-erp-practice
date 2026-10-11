@@ -6,7 +6,7 @@ class InvoiceProcessor
     public function __construct(private InvoiceCalculator $invoiceCalculator,
     private GenerateCsv $csvGenerator,
     private SaveData $saveData,
-    private EmailClass $emailClass
+    private EmailNotifier $emailClass
     ){
     }
     public function processInvoice(array $lines, string $emailAddress):void
@@ -19,3 +19,4 @@ class InvoiceProcessor
         $this->emailClass->sendEmail($emailAddress, $invoiceVatTotal);
     }
 }
+
