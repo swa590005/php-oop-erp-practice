@@ -4,6 +4,7 @@ declare(strict_types = 1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use app\erp_oops_classes\Auditable;
+use app\erp_oops_classes\FreeSample;
 use app\erp_oops_classes\GenerateCsv;
 use app\erp_oops_classes\InvoiceCalculator;
 use app\erp_oops_classes\InvoiceProcessor;
@@ -26,6 +27,11 @@ use app\erp_oops_classes\FakeEmailNotifier;
 use app\erp_oops_classes\BothChannelsNotifier;
 use app\erp_oops_classes\SmsClass;
 use app\erp_oops_classes\SmsNotifier;
+use app\erp_oops_classes\Discount;
+use app\erp_oops_classes\StandardDiscount;
+use app\erp_oops_classes\BulkDiscount;
+
+
 
 
 //----------------------------------------------------------------------------------
@@ -161,4 +167,24 @@ $invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCs
 
 //------------------------Interface Segregation
 $invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new BothChannelsNotifier());
-$invoiceProcessor->processInvoice($lines, 'a@b.de');
+//$invoiceProcessor->processInvoice($lines, 'a@b.de');
+
+//--------------------------Liskov Substitution
+$material1 = new Material(AbstractArticle::generateId(), 'Service', 10.0);
+$material2 = new Material(AbstractArticle::generateId(), 'new Service', 5.0);
+$freeSample = new FreeSample(AbstractArticle::generateId(), 'free-sample');
+
+$article = [$material1, $material2, $freeSample];
+$total = 0;
+foreach ($article as $item) {
+    $total += $item->getValue();
+}
+//var_dump($total);
+
+$discount = new BulkDiscount();
+$amounts = [250.0,40.0,80.0];
+$totalAmount = 0;
+foreach ($amounts as $amount) {
+    $totalAmount += $discount->apply($amount);
+}
+var_dump($totalAmount);
