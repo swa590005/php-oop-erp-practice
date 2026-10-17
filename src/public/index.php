@@ -153,20 +153,20 @@ $lines = [
 
 //----------------------dependency injection
 
-$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new NewEmailService());
+//$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new NewEmailService());
 //$invoiceProcessor->processInvoice($lines, 'a@b.de');
 
 //----------------------Open-Closed Principle
 
 $fake = new FakeEmailNotifier();
-$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), $fake);
+//$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), $fake);
 
 //$invoiceProcessor->processInvoice($lines, 'a@b.de');
 //var_dump($fake->getLastEmailAddress(), $fake->getLastInvoiceTotal());
 
 
 //------------------------Interface Segregation
-$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new BothChannelsNotifier());
+//$invoiceProcessor = new InvoiceProcessor(new InvoiceCalculator(), new GenerateCsv(), new SaveData(), new BothChannelsNotifier());
 //$invoiceProcessor->processInvoice($lines, 'a@b.de');
 
 //--------------------------Liskov Substitution
@@ -187,4 +187,27 @@ $totalAmount = 0;
 foreach ($amounts as $amount) {
     $totalAmount += $discount->apply($amount);
 }
-var_dump($totalAmount);
+//var_dump($totalAmount);
+
+//------------------------------Factory Method
+
+//try {
+//    $material = \app\erp_oops_classes\ArticleFactory::create('material', 'Bolts');   //price missing
+//} catch (\InvalidArgumentException $e) {
+//    echo "Caught: " . $e->getMessage();
+//}
+$material1 = \app\erp_oops_classes\ArticleFactory::create('material', 'Washers', 0.10);
+$freeSample = \app\erp_oops_classes\ArticleFactory::create('freeSample', 'Free Sample');
+
+//var_dump($material1->getDescription(), $freeSample->getDescription());
+
+//------------------Strategy Pattern
+$lines = [
+//    ['name' => 'Bolts',   'quantity' => 1000, 'unitPrice' => 0.50],
+//    ['name' => 'Washers', 'quantity' => 20,   'unitPrice' => 0.10],
+    ['name' => 'Nuts', 'quantity' => 100, 'unitPrice' => 0.90]
+];
+//$invoiceCalculator = new InvoiceCalculator(new StandardDiscount());
+$invoiceCalculator1= new InvoiceCalculator(new BulkDiscount());
+//var_dump($invoiceCalculator->calculateInvoiceVat($lines));
+var_dump($invoiceCalculator1->calculateInvoiceVat($lines));
