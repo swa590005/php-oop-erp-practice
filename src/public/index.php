@@ -210,4 +210,13 @@ $lines = [
 //$invoiceCalculator = new InvoiceCalculator(new StandardDiscount());
 $invoiceCalculator1= new InvoiceCalculator(new BulkDiscount());
 //var_dump($invoiceCalculator->calculateInvoiceVat($lines));
-var_dump($invoiceCalculator1->calculateInvoiceVat($lines));
+//var_dump($invoiceCalculator1->calculateInvoiceVat($lines));
+
+//----------------------- Repository
+$article1 = \app\erp_oops_classes\ArticleFactory::create('material', 'Washers', 0.10);
+$article2 = \app\erp_oops_classes\ArticleFactory::create('material', 'something-else', 0.23);
+$inMemoryArticleRepository = new \app\erp_oops_classes\InMemoryArticleRepository();
+$inMemoryArticleRepository->add($article1);
+$inMemoryArticleRepository->add($article2);
+$article = $inMemoryArticleRepository->find(14);
+var_dump($article);

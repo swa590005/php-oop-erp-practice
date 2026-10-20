@@ -11,6 +11,6 @@ class InMemoryArticleRepository implements ArticleRepository
     }
     public function add(AbstractArticle $article):void
     {
-        $this->articles[]=$article;
+        $this->articles[$article->getArticleId()]=$article;
     }
 }

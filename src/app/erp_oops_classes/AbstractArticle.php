@@ -39,4 +39,8 @@ abstract class AbstractArticle
     {
         return new static($id, $name, ...$extras);
     }
+    public function getArticleId():int
+    {
+        return $this->id;
+    }
 }
