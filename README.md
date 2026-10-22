@@ -1,6 +1,6 @@
 # ERP OOP Playground
 
-A hands-on practice project for **PHP 8+ and object-oriented programming**, built around an ERP domain (articles, materials, services, suppliers, purchase orders, stock) instead of the usual e-commerce examples.
+A hands-on practice project for **PHP 8+ and object-oriented programming**, built around an ERP domain (articles, materials, services, suppliers, purchase orders, invoices) instead of the usual e-commerce examples.
 
 I built this while returning to PHP development after a career break. Every concept below was implemented and tested by hand, not copied from a tutorial.
 
@@ -23,7 +23,15 @@ docker-compose exec app composer install
 docker-compose exec app composer dump-autoload
 ```
 
-The entry point is `public/index.php`, where each concept is exercised with small test scripts.
+The entry point is `src/public/index.php`, where each concept is exercised with small scripts.
+
+## Running the Tests
+
+```bash
+docker-compose exec app vendor/bin/phpunit --bootstrap vendor/autoload.php tests
+```
+
+Run it from the `docker` folder. The project currently has 13 PHPUnit tests (see "Testing" below).
 
 ## Concepts Covered
 
@@ -53,18 +61,43 @@ The entry point is `public/index.php`, where each concept is exercised with smal
 - Late static binding: `self::` vs `static::`, and `new static()` in inherited factories
 - First-class callable syntax: `ClassName::method(...)` with `usort()` and `array_map()`
 - PHP 8 attributes: custom attribute classes read back through the Reflection API
+- PSR-4 autoloading: namespace to path mapping, one class per file
 
-### Level 5: Design (in progress)
-- SOLID principles
-- Dependency injection
-- Design patterns (Factory, Strategy, Repository) in a Symfony context
+### Level 5: Design (SOLID, DI and patterns)
+
+**SOLID, each one built and tested on an invoice pipeline**
+- **S (Single Responsibility):** invoice work split into `InvoiceCalculator`, `GenerateCsv`, `SaveData` and a coordinating `InvoiceProcessor`
+- **O (Open/Closed):** new mail services are new classes, not edits to the processor
+- **L (Liskov Substitution):** a `FreeSample` that throws in `getValue()` breaks the price loop; fixed by keeping the parent's promise (and a `BulkDiscount` that accepts any amount)
+- **I (Interface Segregation):** small `EmailNotifier` and SMS interfaces instead of one big notifier; a class implements only what it can do
+- **D (Dependency Inversion):** classes depend on `EmailNotifier` and `Discount`, not on concrete classes
+
+**Dependency injection**
+- Constructor injection in `InvoiceProcessor` and `InvoiceCalculator`
+- A `FakeEmailNotifier` test double that records what it was asked to send
+
+**Design patterns**
+- **Factory:** `ArticleFactory::create()` builds `Material` or `FreeSample` from runtime data, with clear exceptions for unknown types or a missing price
+- **Strategy:** `Discount` with `StandardDiscount` and `BulkDiscount`, injected into `InvoiceCalculator` (discount first, then 19% VAT)
+- **Repository:** `ArticleRepository` interface with an in-memory implementation that finds articles by id and returns `null` for unknown ids
+
+### Testing (PHPUnit)
+- First PHPUnit setup in Docker; reading green and red output
+- Strict assertions: `assertSame` (value and type), `assertNull`, `assertInstanceOf`, `expectException`
+- `setUp()` for a fresh object per test
+- **Boundary tests:** `BulkDiscount` below, at and above 100
+- **Factory tests:** valid types, unknown type, material without a price
+- **Repository tests:** found by id, `null` for an unknown id, two articles stay separate. A mutation check (breaking `add()` on purpose) proved these tests really catch the bug
+- **Test double:** `InvoiceProcessor` is tested with `FakeEmailNotifier`, so no real email is sent. The same processor gives different totals for `StandardDiscount` and `BulkDiscount`
 
 ## Domain Model
 
 | Class | Role |
 |---|---|
 | `AbstractArticle` | Abstract base for all articles (shared id, name, summary logic) |
-| `Material`, `Service` | Concrete articles extending `AbstractArticle` |
+| `Material`, `Service`, `FreeSample` | Concrete articles extending `AbstractArticle` |
+| `ArticleFactory` | Creates the right article from a type string plus data |
+| `ArticleRepository`, `InMemoryArticleRepository` | Collection-like access to articles, hiding storage |
 | `Supplier`, `Location` | Standalone entities sharing behavior through traits |
 | `PurchaseOrder` | Order with status handling, magic accessors, and reflection-readable field labels |
 | `OrderStatus` | Backed string enum (`Pending`, `Approved`, `Shipped`, `Cancelled`) |
@@ -72,21 +105,8 @@ The entry point is `public/index.php`, where each concept is exercised with smal
 | `Identifiable`, `Loggable` | Traits with conflict resolution |
 | `VatCalculator` | Invokable class (`__invoke`) computing gross values |
 | `FieldLabel` | Custom PHP 8 attribute |
-
-## Project Structure
-
-```
-app/classes/erp_oops_classes/   # Domain classes (namespace app\classes\erp_oops_classes)
-public/index.php                # Test scripts for each concept
-composer.json                   # PSR-4 autoload mapping
-```
-
-## Notes on Autoloading
-
-Each class lives in its own file, named after the class and placed in the folder matching its namespace. Composer's PSR-4 autoloader resolves classes purely from that mapping, so a misplaced or missing file only fails at the moment the class is first used.
-
-## Roadmap
-
-- Finish Level 5 (SOLID, DI, design patterns)
-- Add PHPUnit tests for the domain classes
-- Migrate selected classes into a small Symfony application with Doctrine
+| `InvoiceCalculator` | Totals with VAT; receives a `Discount` strategy |
+| `Discount`, `StandardDiscount`, `BulkDiscount` | Discount strategy family |
+| `GenerateCsv`, `SaveData` | Single-purpose invoice helpers |
+| `InvoiceProcessor` | Coordinates the invoice steps; receives its helpers by constructor |
+| `EmailNotifier` and implementations | Interchangeable mail services behind one interface |
